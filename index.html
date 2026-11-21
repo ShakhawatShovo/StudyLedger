@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="description" content="StudyLedger — পড়ালেখার দিনলিপি। সাপ্তাহিক রুটিন বানান, দৈনিক পড়া লগ রাখুন, শিক্ষককে রিপোর্ট পাঠান। সম্পূর্ণ ফ্রি।" />
+  <title>StudyLedger — শিক্ষার্থী রুটিন | Weekly Routine & Daily Study Tracker</title>
+
+  <!-- Open Graph / Social Preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://studyledger-ten.vercel.app/" />
+  <meta property="og:title" content="StudyLedger — পড়ালেখার দিনলিপি" />
+  <meta property="og:description" content="সাপ্তাহিক রুটিন বানান, দৈনিক পড়া লগ রাখুন, প্রিন্ট ও লক স্ক্রিন ইমেজ নিন। শিক্ষককে WhatsApp-এ রিপোর্ট পাঠান। সম্পূর্ণ ফ্রি।" />
+  <meta property="og:image" content="https://studyledger-ten.vercel.app/logo-light.jpg" />
+  <meta property="og:locale" content="bn_BD" />
+  <meta property="og:site_name" content="StudyLedger" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="StudyLedger — পড়ালেখার দিনলিপি" />
+  <meta name="twitter:description" content="সাপ্তাহিক রুটিন ও দৈনিক স্টাডি ট্র্যাকার। ফ্রি।" />
+  <meta name="twitter:image" content="https://studyledger-ten.vercel.app/logo-light.jpg" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="logo-light.jpg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="StudyLedger" />
+  <link rel="icon" type="image/jpeg" href="logo-light.jpg" />
+
+  <!-- Google Fonts: Noto Sans Bengali + Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="#" class="logo-wrap" id="logoHome">
+          <img src="logo-light.jpg" alt="StudyLedger" class="logo-img logo-light" />
+          <img src="logo-dark.jpg" alt="StudyLedger" class="logo-img logo-dark" />
+        </a>
+        <nav class="desktop-nav">
+          <button class="nav-link active" data-page="routine" data-i18n="navRoutine">রুটিন</button>
+          <button class="nav-link" data-page="log" data-i18n="navLog">লগ</button>
+          <button class="nav-link" data-page="history" data-i18n="navHistory">হিস্ট্রি</button>
+          <button class="nav-link" data-page="settings" data-i18n="navSettings">সেটিংস</button>
+        </nav>
+      </div>
+      <div class="header-right">
+        <button id="langToggle" class="icon-btn" title="Language">
+          <span id="langLabel">EN</span>
+        </button>
+        <button id="themeToggle" class="icon-btn" title="Theme">
+          <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="app">
+    <!-- PAGE: Routine -->
+    <section id="page-routine" class="page active">
+      <div class="page-header">
+        <h2 data-i18n="routineTitle">সাপ্তাহিক রুটিন</h2>
+        <p class="subtitle" data-i18n="routineSubtitle">আপনার সপ্তাহের পড়াশোনার পরিকল্পনা তৈরি করুন</p>
+      </div>
+
+      <!-- Student Info -->
+      <div class="card">
+        <h3 data-i18n="studentInfo">শিক্ষার্থীর তথ্য</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="name">নাম</label>
+            <input type="text" id="studentName" placeholder="আপনার নাম" data-i18n-placeholder="namePlaceholder" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="class">ক্লাস</label>
+            <input type="text" id="studentClass" placeholder="যেমন: ৯ / SSC" data-i18n-placeholder="classPlaceholder" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Routine Selector -->
+      <div class="card">
+        <div class="card-header-row">
+          <h3 data-i18n="routines">রুটিনসমূহ</h3>
+          <div class="btn-group">
+            <button id="templateBtn" class="btn btn-sm btn-outline" data-i18n="templates">টেমপ্লেট</button>
+            <button id="addRoutineBtn" class="btn btn-sm btn-primary">
+              <span>+</span> <span data-i18n="newRoutine">নতুন রুটিন</span>
+            </button>
+          </div>
+        </div>
+        <div id="routineList" class="routine-list"></div>
+      </div>
+
+      <!-- Exam banner on routine page too -->
+      <div class="card exam-banner" id="examBannerRoutine" style="display:none;">
+        <span class="exam-banner-icon">📅</span>
+        <span id="examBannerText"></span>
+      </div>
+
+      <!-- Days Editor -->
+      <div class="card" id="routineEditor" style="display:none;">
+        <div class="card-header-row">
+          <h3 id="editingRoutineName">রুটিন এডিট</h3>
+          <div class="btn-group">
+            <button id="copyDayBtn" class="btn btn-sm btn-outline" data-i18n="copyDay">দিন কপি</button>
+            <button id="saveRoutineBtn" class="btn btn-sm btn-primary" data-i18n="save">সেভ</button>
+          </div>
+        </div>
+
+        <div class="days-tabs" id="daysTabs"></div>
+        <div id="daySlots" class="day-slots"></div>
+      </div>
+
+      <!-- Generate Section -->
+      <div class="card" id="generateSection" style="display:none;">
+        <h3 data-i18n="generateImages">ইমেজ তৈরি করুন</h3>
+        <p class="hint" data-i18n="generateHint">প্রিন্ট ও লক স্ক্রিনের জন্য সুন্দর ইমেজ তৈরি করুন</p>
+        <div class="btn-row">
+          <button id="previewLandscapeBtn" class="btn btn-primary" data-i18n="previewLandscape">Landscape প্রিভিউ</button>
+          <button id="previewPortraitBtn" class="btn btn-primary" data-i18n="previewPortrait">Portrait প্রিভিউ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: Daily Log -->
+    <section id="page-log" class="page">
+      <div class="page-header">
+        <h2 data-i18n="logTitle">আজকের লগ</h2>
+        <p class="subtitle" data-i18n="logSubtitle">রুটিন অনুযায়ী আজ কী করেছেন লিখুন</p>
+      </div>
+
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="date">তারিখ</label>
+            <input type="date" id="logDate" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="activeRoutine">সক্রিয় রুটিন</label>
+            <select id="logRoutineSelect"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="todaysSubjects">আজকের বিষয়সমূহ</h3>
+        <div id="logEntries" class="log-entries"></div>
+        <button id="submitLogBtn" class="btn btn-primary btn-block" data-i18n="submitLog">লগ সেভ করুন</button>
+      </div>
+
+      <div class="card" id="logResult" style="display:none;">
+        <h3 data-i18n="todaysReport">আজকের রিপোর্ট</h3>
+        <div id="logTableContainer"></div>
+        <div class="btn-row mt-3">
+          <button id="shareWhatsAppBtn" class="btn btn-success" data-i18n="shareWhatsApp">WhatsApp-এ পাঠাও</button>
+          <button id="copyTableBtn" class="btn btn-outline" data-i18n="copyTable">টেবিল কপি</button>
+          <button id="downloadLogImgBtn" class="btn btn-outline" data-i18n="downloadImg">ইমেজ</button>
+          <button id="downloadLogPdfBtn" class="btn btn-outline" data-i18n="downloadPdf">PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE: History -->
+    <section id="page-history" class="page">
+      <div class="page-header">
+        <h2 data-i18n="historyTitle">হিস্ট্রি ও সারাংশ</h2>
+        <p class="subtitle" data-i18n="historySubtitle">আগের লগ ও সাপ্তাহিক অগ্রগতি দেখুন</p>
+      </div>
+
+      <!-- Exam countdown -->
+      <div class="card exam-card" id="examCountdownCard" style="display:none;">
+        <div class="exam-countdown">
+          <div class="exam-label" data-i18n="examCountdown">পরীক্ষা পর্যন্ত বাকি</div>
+          <div class="exam-days" id="examDaysLeft">—</div>
+          <div class="exam-name" id="examNameDisplay"></div>
+        </div>
+      </div>
+
+      <div class="card stats-card">
+        <div class="stat-item">
+          <div class="stat-value" id="statDays">0</div>
+          <div class="stat-label" data-i18n="daysLogged">দিন লগ</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label" data-i18n="currentStreak">বর্তমান স্ট্রিক</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statBest">0</div>
+          <div class="stat-label" data-i18n="bestStreak">সেরা স্ট্রিক</div>
+        </div>
+      </div>
+
+      <!-- Weekly progress -->
+      <div class="card">
+        <h3 data-i18n="weeklyProgress">এই সপ্তাহের অগ্রগতি</h3>
+        <div class="progress-wrap">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="weekProgressFill" style="width:0%"></div>
+          </div>
+          <div class="progress-text" id="weekProgressText">0 / 7</div>
+        </div>
+        <div id="subjectStats" class="subject-stats"></div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="pastLogs">আগের লগসমূহ</h3>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </section>
+
+    <!-- PAGE: Settings -->
+    <section id="page-settings" class="page">
+      <div class="page-header">
+        <h2 data-i18n="settingsTitle">সেটিংস</h2>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="appearance">চেহারা</h3>
+        <div class="setting-row">
+          <span data-i18n="colorTheme">কালার থিম</span>
+          <div class="theme-options" id="themeOptions">
+            <button class="theme-swatch active" data-theme="blue" style="--swatch:#4f46e5"></button>
+            <button class="theme-swatch" data-theme="green" style="--swatch:#10b981"></button>
+            <button class="theme-swatch" data-theme="purple" style="--swatch:#8b5cf6"></button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span data-i18n="darkMode">ডার্ক মোড</span>
+          <label class="switch">
+            <input type="checkbox" id="darkModeCheck" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="examSettings">পরীক্ষার কাউন্টডাউন</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="examName">পরীক্ষার নাম</label>
+            <input type="text" id="examNameInput" placeholder="যেমন: SSC 2027" data-i18n-placeholder="examNamePlaceholder" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="examDate">তারিখ</label>
+            <input type="date" id="examDateInput" />
+          </div>
+        </div>
+        <button id="saveExamBtn" class="btn btn-primary btn-sm" data-i18n="save">সেভ</button>
+        <button id="clearExamBtn" class="btn btn-outline btn-sm" data-i18n="clearExam">মুছুন</button>
+      </div>
+
+      <div class="card">
+        <h3 data-i18n="data">ডেটা</h3>
+        <p class="hint" data-i18n="backupHint">ব্রাউজার ডেটা ক্লিয়ার করলে সব মুছে যাবে। মাঝে মাঝে ব্যাকআপ নিন।</p>
+        <div class="btn-row">
+          <button id="exportBtn" class="btn btn-outline" data-i18n="exportData">Export (JSON)</button>
+          <button id="importBtn" class="btn btn-outline" data-i18n="importData">Import (JSON)</button>
+          <input type="file" id="importFile" accept=".json" hidden />
+        </div>
+        <button id="clearDataBtn" class="btn btn-danger btn-block mt-3" data-i18n="clearAll">সব ডেটা মুছুন</button>
+      </div>
+
+      <div class="card" id="installCard" style="display:none;">
+        <h3 data-i18n="installApp">অ্যাপ ইনস্টল করুন</h3>
+        <p class="hint" data-i18n="installHint">হোম স্ক্রিনে যোগ করে অ্যাপের মতো ব্যবহার করুন।</p>
+        <button id="installBtn" class="btn btn-primary btn-block" data-i18n="installNow">ইনস্টল করুন</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation (Mobile) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="routine">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span data-i18n="navRoutine">রুটিন</span>
+    </button>
+    <button class="nav-item" data-page="log">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span data-i18n="navLog">লগ</span>
+    </button>
+    <button class="nav-item" data-page="history">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span data-i18n="navHistory">হিস্ট্রি</span>
+    </button>
+    <button class="nav-item" data-page="settings">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span data-i18n="navSettings">সেটিংস</span>
+    </button>
+  </nav>
+
+  <!-- Modal: Preview -->
+  <div id="previewModal" class="modal">
+    <div class="modal-content preview-modal">
+      <div class="modal-header">
+        <h3 id="previewTitle">প্রিভিউ</h3>
+        <button class="modal-close" id="closePreview">&times;</button>
+      </div>
+      <div class="preview-body">
+        <div id="previewContainer"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="downloadPngBtn" class="btn btn-primary" data-i18n="downloadPng">PNG ডাউনলোড</button>
+        <button id="downloadPdfBtn" class="btn btn-outline" data-i18n="downloadPdf">PDF ডাউনলোড</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Copy Day -->
+  <div id="copyDayModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="copyDayTitle">দিন কপি করুন</h3>
+        <button class="modal-close" data-close="copyDayModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p data-i18n="copyFrom">কোন দিন থেকে কপি করবেন?</p>
+        <select id="copyFromDay"></select>
+        <p class="mt-2" data-i18n="copyTo">কোন দিনে কপি করবেন?</p>
+        <div id="copyToDays" class="checkbox-group"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="confirmCopyBtn" class="btn btn-primary" data-i18n="copy">কপি করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Log -->
+  <div id="editLogModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="editLog">লগ এডিট</h3>
+        <button class="modal-close" data-close="editLogModal">&times;</button>
+      </div>
+      <div class="modal-body" id="editLogBody"></div>
+      <div class="modal-footer">
+        <button id="saveEditLogBtn" class="btn btn-primary" data-i18n="save">সেভ</button>
+        <button id="deleteLogBtn" class="btn btn-danger" data-i18n="delete">মুছুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <!-- Modal: Templates -->
+  <div id="templateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="chooseTemplate">টেমপ্লেট বেছে নিন</h3>
+        <button class="modal-close" data-close="templateModal">&times;</button>
+      </div>
+      <div class="modal-body" id="templateList"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Hidden render areas for canvas -->
+  <div id="renderArea" style="position:fixed;left:-9999px;top:0;"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

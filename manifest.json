@@ -1,0 +1,25 @@
+{
+  "name": "StudyLedger — পড়ালেখার দিনলিপি",
+  "short_name": "StudyLedger",
+  "description": "সাপ্তাহিক রুটিন ও দৈনিক স্টাডি ট্র্যাকার",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "lang": "bn",
+  "icons": [
+    {
+      "src": "logo-light.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-light.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
