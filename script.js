@@ -96,6 +96,17 @@
       examPassed: 'পরীক্ষা শেষ',
       noSubjectStats: 'এই সপ্তাহে এখনো লগ নেই।',
       useTemplate: 'ব্যবহার করুন',
+      shareRoutine: 'শিক্ষার্থীদের সাথে শেয়ার',
+      shareRoutineHint: 'টিউটর/শিক্ষক: কোড কপি করে শিক্ষার্থীদের পাঠান। তারা ইমপোর্ট করে একই রুটিন পাবে।',
+      shareCodeHelp: 'এই কোডটি কপি করে WhatsApp/মেসেজে শিক্ষার্থীদের পাঠান। তারা StudyLedger-এ গিয়ে ইমপোর্ট করবে।',
+      importTutorTitle: 'টিউটরের রুটিন ইমপোর্ট',
+      importTutorHint: 'শিক্ষক যে কোড দিয়েছেন সেটা নিচে পেস্ট করুন',
+      importCode: 'ইমপোর্ট করুন',
+      importSuccess: 'রুটিন ইমপোর্ট হয়েছে!',
+      importFail: 'কোড সঠিক নয়',
+      timeCol: 'সময়',
+      period: 'পিরিয়ড',
+
     },
     en: {
       appTitle: 'StudyLedger',
@@ -186,6 +197,17 @@
       examPassed: 'Exam over',
       noSubjectStats: 'No logs this week yet.',
       useTemplate: 'Use',
+      shareRoutine: 'Share with students',
+      shareRoutineHint: 'Tutor: copy the code and send to students. They import it to get the same routine.',
+      shareCodeHelp: 'Copy this code and send via WhatsApp. Students paste it under Import tutor routine.',
+      importTutorTitle: 'Import tutor routine',
+      importTutorHint: 'Paste the code your teacher shared',
+      importCode: 'Import',
+      importSuccess: 'Routine imported!',
+      importFail: 'Invalid code',
+      timeCol: 'Time',
+      period: 'Period',
+
     }
   };
 
@@ -763,65 +785,156 @@
     const r = getActiveRoutine();
     if (!r) return null;
     const colors = getThemeColors();
-    const name = state.student.name || 'Student';
+    const name = state.student.name || (state.settings.lang === 'bn' ? 'শিক্ষার্থী' : 'Student');
     const cls = state.student.class || '';
-    const dateStr = new Date().toLocaleDateString(state.settings.lang === 'bn' ? 'bn-BD' : 'en-GB');
+    const dateStr = new Date().toLocaleDateString(state.settings.lang === 'bn' ? 'bn-BD' : 'en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
     const isLandscape = mode === 'landscape';
-    const title = state.settings.lang === 'bn' ? 'সাপ্তাহিক রুটিন' : 'Weekly Routine';
+    const title = state.settings.lang === 'bn' ? 'সাপ্তাহিক ক্লাস রুটিন' : 'Weekly Class Routine';
+    const daysShort = t('days');
+    const daysFull = t('daysFull');
+    const timeLabel = t('timeCol');
 
-    let daysHTML = '';
-    const days = t('daysFull');
-    DAY_KEYS.forEach((key, i) => {
-      const slots = r.days[key] || [];
-      if (slots.length === 0) return;
-      const items = slots.map(s =>
-        `<div style="display:flex;gap:10px;margin-bottom:6px;font-size:${isLandscape ? '14px' : '13.5px'};align-items:baseline;">
-          ${s.time ? `<span style="color:${colors.primary};font-weight:700;min-width:72px;font-size:0.95em;">${s.time}</span>` : ''}
-          <span style="color:#1e293b;">${s.subject}</span>
-        </div>`
-      ).join('');
-      daysHTML += `
-        <div style="
-          background: ${colors.cardGrad};
-          border-radius: 14px;
-          padding: 14px 16px;
-          border: 1px solid rgba(0,0,0,0.06);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-          break-inside: avoid;
-        ">
-          <div style="
-            font-weight: 800;
-            color: ${colors.primary};
-            margin-bottom: 10px;
-            font-size: ${isLandscape ? '15px' : '14.5px'};
-            padding-bottom: 6px;
-            border-bottom: 2.5px solid ${colors.light};
-            letter-spacing: -0.01em;
-          ">${days[i]}</div>
-          ${items}
-        </div>
-      `;
+    // Collect unique times (preserve order of first appearance, then sort-ish)
+    const timeSet = [];
+    const timeIndex = {};
+    DAY_KEYS.forEach((key) => {
+      (r.days[key] || []).forEach((s) => {
+        const tm = (s.time || '').trim();
+        if (tm && timeIndex[tm] === undefined) {
+          timeIndex[tm] = timeSet.length;
+          timeSet.push(tm);
+        }
+      });
+    });
+    // Also collect untimed subjects per day
+    const untimed = {};
+    DAY_KEYS.forEach((key) => {
+      untimed[key] = (r.days[key] || []).filter(s => !(s.time || '').trim() && (s.subject || '').trim());
     });
 
+    // Build cell map: time -> dayKey -> subjects[]
+    const cellMap = {};
+    timeSet.forEach((tm) => { cellMap[tm] = {}; DAY_KEYS.forEach(k => { cellMap[tm][k] = []; }); });
+    DAY_KEYS.forEach((key) => {
+      (r.days[key] || []).forEach((s) => {
+        const tm = (s.time || '').trim();
+        const sub = (s.subject || '').trim();
+        if (tm && sub && cellMap[tm]) cellMap[tm][key].push(sub);
+      });
+    });
+
+    const hasTimes = timeSet.length > 0;
+
+    // --- Landscape: classic institutional table ---
     if (isLandscape) {
+      let tableRows = '';
+      if (hasTimes) {
+        timeSet.forEach((tm, rowIdx) => {
+          const bg = rowIdx % 2 === 0 ? '#ffffff' : colors.soft;
+          const cells = DAY_KEYS.map((key) => {
+            const subs = cellMap[tm][key] || [];
+            const text = subs.join('<br/>') || '—';
+            return `<td style="
+              border: 1px solid #cbd5e1;
+              padding: 10px 8px;
+              text-align: center;
+              vertical-align: middle;
+              font-size: 13px;
+              font-weight: ${subs.length ? '600' : '400'};
+              color: ${subs.length ? '#0f172a' : '#94a3b8'};
+              background: ${bg};
+              min-width: 110px;
+            ">${text}</td>`;
+          }).join('');
+          tableRows += `<tr>
+            <td style="
+              border: 1px solid #cbd5e1;
+              padding: 10px 12px;
+              text-align: center;
+              font-weight: 700;
+              font-size: 12.5px;
+              color: ${colors.primary};
+              background: ${colors.light};
+              white-space: nowrap;
+              min-width: 100px;
+            ">${tm}</td>
+            ${cells}
+          </tr>`;
+        });
+      } else {
+        // No times: one row per day content stacked — fallback to max slots rows
+        let maxSlots = 0;
+        DAY_KEYS.forEach(k => { maxSlots = Math.max(maxSlots, (r.days[k] || []).length); });
+        if (maxSlots === 0) maxSlots = 1;
+        for (let i = 0; i < maxSlots; i++) {
+          const bg = i % 2 === 0 ? '#ffffff' : colors.soft;
+          const cells = DAY_KEYS.map((key) => {
+            const slot = (r.days[key] || [])[i];
+            const text = slot ? (slot.subject || '—') : '—';
+            return `<td style="border:1px solid #cbd5e1;padding:12px 8px;text-align:center;vertical-align:middle;font-size:13px;font-weight:600;color:#0f172a;background:${bg};">${text}</td>`;
+          }).join('');
+          tableRows += `<tr>
+            <td style="border:1px solid #cbd5e1;padding:10px;text-align:center;font-weight:700;font-size:12px;color:${colors.primary};background:${colors.light};">${t('period')} ${i + 1}</td>
+            ${cells}
+          </tr>`;
+        }
+      }
+
+      // Untimed note rows
+      let untimedNote = '';
+      const hasUntimed = DAY_KEYS.some(k => (untimed[k] || []).length);
+      if (hasUntimed && hasTimes) {
+        const cells = DAY_KEYS.map((key) => {
+          const items = (untimed[key] || []).map(s => s.subject).join('<br/>') || '—';
+          return `<td style="border:1px solid #cbd5e1;padding:8px;text-align:center;font-size:12px;background:#f8fafc;color:#475569;">${items}</td>`;
+        }).join('');
+        untimedNote = `<tr>
+          <td style="border:1px solid #cbd5e1;padding:8px;text-align:center;font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;">+</td>
+          ${cells}
+        </tr>`;
+      }
+
+      const dayHeaders = DAY_KEYS.map((key, i) =>
+        `<th style="
+          border: 1px solid rgba(255,255,255,0.2);
+          padding: 14px 8px;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 800;
+          color: #fff;
+          background: transparent;
+          letter-spacing: 0.02em;
+        ">${daysShort[i]}</th>`
+      ).join('');
+
       return `
         <div class="render-card" id="renderTarget" style="
-          width: 1400px; height: 990px;
+          width: 1600px; height: 1000px;
           padding: 0;
-          background: ${colors.grad};
+          background: #f8fafc;
           display: flex; flex-direction: column;
           font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
           position: relative;
           overflow: hidden;
         ">
-          <!-- Decorative top bar -->
-          <div style="height: 8px; background: ${colors.accent};"></div>
-          <div style="padding: 36px 48px 28px; flex: 1; display: flex; flex-direction: column;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;">
-              <div>
-                <div style="font-size:30px;font-weight:800;color:${colors.dark};letter-spacing:-0.02em;">${name}</div>
-                <div style="font-size:15px;color:#64748b;margin-top:5px;font-weight:500;">
-                  ${cls ? cls + '  ·  ' : ''}${r.name}
+          <div style="height: 6px; background: ${colors.accent};"></div>
+          <div style="padding: 28px 40px 20px; background: linear-gradient(180deg, ${colors.light} 0%, #f8fafc 100%);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;align-items:center;gap:18px;">
+                <div style="
+                  width: 56px; height: 56px; border-radius: 14px;
+                  background: ${colors.accent};
+                  display:flex;align-items:center;justify-content:center;
+                  color:#fff;font-size:26px;font-weight:800;
+                  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+                ">📚</div>
+                <div>
+                  <div style="font-size:26px;font-weight:800;color:${colors.dark};letter-spacing:-0.02em;line-height:1.2;">${name}</div>
+                  <div style="font-size:14px;color:#64748b;margin-top:3px;font-weight:500;">
+                    ${cls ? cls + '  ·  ' : ''}<span style="color:${colors.primary};font-weight:700;">${r.name}</span>
+                  </div>
                 </div>
               </div>
               <div style="text-align:right;">
@@ -829,68 +942,223 @@
                   display:inline-block;
                   background: ${colors.accent};
                   color: #fff;
-                  font-size: 15px;
-                  font-weight: 700;
-                  padding: 8px 18px;
-                  border-radius: 999px;
-                  letter-spacing: 0.01em;
+                  font-size: 14px;
+                  font-weight: 800;
+                  padding: 8px 20px;
+                  border-radius: 8px;
+                  letter-spacing: 0.04em;
+                  text-transform: uppercase;
                 ">${title}</div>
-                <div style="font-size:13px;color:#94a3b8;margin-top:8px;">${dateStr}</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:8px;font-weight:500;">${dateStr}</div>
               </div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1;align-content:start;">
-              ${daysHTML}
-            </div>
-            <div style="margin-top:auto;padding-top:18px;text-align:center;font-size:12px;color:#94a3b8;font-weight:500;">
-              StudyLedger
             </div>
           </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="render-card" id="renderTarget" style="
-          width: 1080px; height: 2400px;
-          padding: 0;
-          background: ${colors.grad};
-          display: flex; flex-direction: column;
-          font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
-          position: relative;
-          overflow: hidden;
-        ">
-          <!-- Soft top glow for lock screen -->
+
+          <div style="padding: 8px 36px 24px; flex: 1;">
+            <table style="
+              width: 100%;
+              border-collapse: collapse;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 4px 24px rgba(15,23,42,0.08);
+              border: 2px solid ${colors.primary};
+            ">
+              <thead>
+                <tr style="background: ${colors.accent};">
+                  <th style="
+                    border: 1px solid rgba(255,255,255,0.2);
+                    padding: 14px 12px;
+                    text-align: center;
+                    font-size: 13px;
+                    font-weight: 800;
+                    color: #fff;
+                    min-width: 100px;
+                  ">${timeLabel}</th>
+                  ${dayHeaders}
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+                ${untimedNote}
+              </tbody>
+            </table>
+          </div>
+
           <div style="
-            position: absolute; top: 0; left: 0; right: 0; height: 280px;
-            background: radial-gradient(ellipse at 50% 0%, ${colors.light} 0%, transparent 70%);
-            pointer-events: none;
-          "></div>
-          <div style="padding: 160px 52px 130px; flex: 1; display: flex; flex-direction: column; position: relative;">
-            <div style="text-align:center;margin-bottom:40px;">
-              <div style="font-size:38px;font-weight:800;color:${colors.dark};letter-spacing:-0.02em;">${name}</div>
-              <div style="font-size:18px;color:#64748b;margin-top:8px;font-weight:500;">
-                ${cls ? cls + '  ·  ' : ''}${r.name}
-              </div>
-              <div style="
-                display: inline-block;
-                margin-top: 16px;
-                background: ${colors.accent};
-                color: #fff;
-                font-size: 15px;
-                font-weight: 700;
-                padding: 9px 22px;
-                border-radius: 999px;
-              ">${title}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:18px;flex:1;">
-              ${daysHTML}
-            </div>
-            <div style="text-align:center;font-size:14px;color:#94a3b8;margin-top:28px;font-weight:500;">
-              ${dateStr}
-            </div>
+            margin-top: auto;
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e2e8f0;
+            background: #fff;
+          ">
+            <div style="font-size:12px;color:#94a3b8;font-weight:600;">StudyLedger · পড়ালেখার দিনলিপি</div>
+            <div style="font-size:11px;color:#cbd5e1;">studyledger-ten.vercel.app</div>
           </div>
         </div>
       `;
     }
+
+    // --- Portrait: lock-screen friendly stacked day cards in elegant table style ---
+    let dayBlocks = '';
+    DAY_KEYS.forEach((key, i) => {
+      const slots = r.days[key] || [];
+      if (!slots.length) return;
+      const rows = slots.map((s, idx) => `
+        <div style="
+          display:flex;
+          gap:12px;
+          align-items:flex-start;
+          padding: 11px 14px;
+          background: ${idx % 2 === 0 ? '#fff' : colors.soft};
+          border-bottom: 1px solid #e2e8f0;
+        ">
+          ${s.time ? `<div style="
+            min-width: 88px;
+            font-weight: 800;
+            font-size: 13px;
+            color: ${colors.primary};
+            padding-top: 1px;
+          ">${s.time}</div>` : ''}
+          <div style="font-size: 15px; font-weight: 600; color: #0f172a; flex:1;">${s.subject || ''}</div>
+        </div>
+      `).join('');
+      dayBlocks += `
+        <div style="
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1.5px solid ${colors.primary}33;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+          margin-bottom: 16px;
+        ">
+          <div style="
+            background: ${colors.accent};
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 12px 16px;
+            letter-spacing: 0.02em;
+          ">${daysFull[i]}</div>
+          ${rows}
+        </div>
+      `;
+    });
+
+    return `
+      <div class="render-card" id="renderTarget" style="
+        width: 1080px; height: 2400px;
+        padding: 0;
+        background: linear-gradient(180deg, ${colors.light} 0%, #ffffff 25%, #f8fafc 100%);
+        display: flex; flex-direction: column;
+        font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+        position: relative;
+        overflow: hidden;
+      ">
+        <div style="height: 8px; background: ${colors.accent};"></div>
+        <div style="padding: 140px 48px 40px; text-align: center;">
+          <div style="
+            display:inline-flex;align-items:center;justify-content:center;
+            width:72px;height:72px;border-radius:18px;
+            background:${colors.accent};color:#fff;font-size:34px;
+            margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,0.12);
+          ">📚</div>
+          <div style="font-size:36px;font-weight:800;color:${colors.dark};letter-spacing:-0.02em;">${name}</div>
+          <div style="font-size:17px;color:#64748b;margin-top:6px;font-weight:500;">
+            ${cls ? cls + ' · ' : ''}${r.name}
+          </div>
+          <div style="
+            display:inline-block;margin-top:16px;
+            background:${colors.accent};color:#fff;
+            font-size:14px;font-weight:800;
+            padding:8px 22px;border-radius:8px;
+            letter-spacing:0.04em;
+          ">${title}</div>
+        </div>
+        <div style="padding: 0 44px 40px; flex: 1;">
+          ${dayBlocks}
+        </div>
+        <div style="text-align:center;padding:20px;font-size:13px;color:#94a3b8;font-weight:500;">
+          ${dateStr} · StudyLedger
+        </div>
+      </div>
+    `;
+  }
+
+
+  function encodeSharePayload(obj) {
+    try {
+      const json = JSON.stringify(obj);
+      const b64 = btoa(unescape(encodeURIComponent(json)));
+      return 'SL:' + b64;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function decodeSharePayload(code) {
+    try {
+      let raw = (code || '').trim();
+      if (raw.startsWith('SL:')) raw = raw.slice(3);
+      const json = decodeURIComponent(escape(atob(raw)));
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function openShareRoutineModal() {
+    const r = getActiveRoutine();
+    if (!r) {
+      toast(t('selectRoutine'));
+      return;
+    }
+    const payload = {
+      v: 1,
+      type: 'routine',
+      routine: {
+        name: r.name,
+        days: r.days
+      },
+      from: state.student.name || '',
+      class: state.student.class || ''
+    };
+    const code = encodeSharePayload(payload);
+    if (!code) {
+      toast(t('importFail'));
+      return;
+    }
+    const out = document.getElementById('shareCodeOutput');
+    if (out) out.value = code;
+    document.getElementById('shareRoutineModal').classList.add('open');
+  }
+
+  function importTutorCode() {
+    const input = document.getElementById('importCodeInput');
+    const code = (input && input.value) || '';
+    const data = decodeSharePayload(code);
+    if (!data || !data.routine || !data.routine.days) {
+      toast(t('importFail'));
+      return;
+    }
+    const r = {
+      id: uid(),
+      name: data.routine.name || (state.settings.lang === 'bn' ? 'টিউটরের রুটিন' : 'Tutor routine'),
+      isActive: true,
+      days: data.routine.days
+    };
+    // ensure all day keys
+    DAY_KEYS.forEach(k => { if (!r.days[k]) r.days[k] = []; });
+    state.routines.forEach(x => { x.isActive = false; });
+    state.routines.push(r);
+    state.editingRoutineId = r.id;
+    state.currentDay = new Date().getDay();
+    if (data.from && !state.student.name) state.student.name = data.from;
+    if (data.class && !state.student.class) state.student.class = data.class;
+    saveData();
+    if (input) input.value = '';
+    renderRoutinePage();
+    toast(t('importSuccess'));
   }
 
   async function waitForFonts() {
@@ -955,9 +1223,9 @@
         const pdf = new jsPDF({
           orientation: isL ? 'landscape' : 'portrait',
           unit: 'px',
-          format: isL ? [1400, 990] : [1080, 2400]
+          format: isL ? [1600, 1000] : [1080, 2400]
         });
-        pdf.addImage(imgData, 'JPEG', 0, 0, isL ? 1400 : 1080, isL ? 990 : 2400);
+        pdf.addImage(imgData, 'JPEG', 0, 0, isL ? 1600 : 1080, isL ? 1000 : 2400);
         pdf.save(`routine-${mode}-${Date.now()}.pdf`);
       }
       toast(t('saved'));
@@ -1152,6 +1420,42 @@
         toast(t('deleted'));
       });
     }
+
+
+    // Share routine with students
+    const shareRoutineBtn = document.getElementById('shareRoutineBtn');
+    if (shareRoutineBtn) shareRoutineBtn.addEventListener('click', openShareRoutineModal);
+    const copyShareCodeBtn = document.getElementById('copyShareCodeBtn');
+    if (copyShareCodeBtn) {
+      copyShareCodeBtn.addEventListener('click', async () => {
+        const out = document.getElementById('shareCodeOutput');
+        if (!out || !out.value) return;
+        try {
+          await navigator.clipboard.writeText(out.value);
+          toast(t('copied'));
+        } catch {
+          out.select();
+          document.execCommand('copy');
+          toast(t('copied'));
+        }
+      });
+    }
+    const waShareCodeBtn = document.getElementById('waShareCodeBtn');
+    if (waShareCodeBtn) {
+      waShareCodeBtn.addEventListener('click', () => {
+        const out = document.getElementById('shareCodeOutput');
+        if (!out || !out.value) return;
+        const msg = encodeURIComponent(
+          (state.settings.lang === 'bn'
+            ? '📚 StudyLedger রুটিন কোড\\nনিচের কোডটি কপি করে StudyLedger অ্যাপে «টিউটরের রুটিন ইমপোর্ট» এ পেস্ট করো:\\n\\n'
+            : '📚 StudyLedger routine code\\nPaste this under Import tutor routine:\\n\\n') + out.value +
+          '\\n\\nhttps://studyledger-ten.vercel.app/'
+        );
+        window.open('https://wa.me/?text=' + msg, '_blank');
+      });
+    }
+    const importCodeBtn = document.getElementById('importCodeBtn');
+    if (importCodeBtn) importCodeBtn.addEventListener('click', importTutorCode);
 
     // Routine list actions
     document.getElementById('routineList').addEventListener('click', (e) => {

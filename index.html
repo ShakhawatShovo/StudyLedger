@@ -137,6 +137,18 @@
           <button id="previewLandscapeBtn" class="btn btn-primary" data-i18n="previewLandscape">Landscape প্রিভিউ</button>
           <button id="previewPortraitBtn" class="btn btn-primary" data-i18n="previewPortrait">Portrait প্রিভিউ</button>
         </div>
+        <div class="btn-row mt-3">
+          <button id="shareRoutineBtn" class="btn btn-success" data-i18n="shareRoutine">শিক্ষার্থীদের সাথে শেয়ার</button>
+        </div>
+        <p class="hint mt-2" data-i18n="shareRoutineHint">টিউটর/শিক্ষক: কোড কপি করে শিক্ষার্থীদের পাঠান। তারা ইমপোর্ট করে একই রুটিন পাবে।</p>
+      </div>
+
+      <!-- Import from tutor -->
+      <div class="card">
+        <h3 data-i18n="importTutorTitle">টিউটরের রুটিন ইমপোর্ট</h3>
+        <p class="hint" data-i18n="importTutorHint">শিক্ষক যে কোড দিয়েছেন সেটা নিচে পেস্ট করুন</p>
+        <textarea id="importCodeInput" rows="3" placeholder="SL:....." style="width:100%;margin-bottom:10px;"></textarea>
+        <button id="importCodeBtn" class="btn btn-primary" data-i18n="importCode">ইমপোর্ট করুন</button>
       </div>
     </section>
 
@@ -367,6 +379,24 @@
         <button class="modal-close" data-close="templateModal">&times;</button>
       </div>
       <div class="modal-body" id="templateList"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Share routine code -->
+  <div id="shareRoutineModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="shareRoutine">শিক্ষার্থীদের সাথে শেয়ার</h3>
+        <button class="modal-close" data-close="shareRoutineModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" data-i18n="shareCodeHelp">এই কোডটি কপি করে WhatsApp/মেসেজে শিক্ষার্থীদের পাঠান। তারা StudyLedger-এ গিয়ে «টিউটরের রুটিন ইমপোর্ট» এ পেস্ট করবে।</p>
+        <textarea id="shareCodeOutput" rows="5" readonly style="width:100%;font-size:0.8rem;word-break:break-all;"></textarea>
+        <div class="btn-row mt-3">
+          <button id="copyShareCodeBtn" class="btn btn-primary" data-i18n="copyTable">কোড কপি</button>
+          <button id="waShareCodeBtn" class="btn btn-success" data-i18n="shareWhatsApp">WhatsApp</button>
+        </div>
+      </div>
     </div>
   </div>
 
